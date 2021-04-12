@@ -7,7 +7,7 @@ namespace ipk_sniffer
     {
         private static void Main(string[] args)
         {
-            Console.WriteLine("Hello World");
+            Console.WriteLine("Hello World!");
             var argument = new ArgumentParser(args);
             
 
