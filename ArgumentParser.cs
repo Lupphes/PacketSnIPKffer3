@@ -20,8 +20,10 @@ namespace ipk_sniffer
         {
             ParseArgument(args);
             Console.WriteLine($"Device:{_device}, Port:{_port}, TCP:{_tcp}, UDP:{_udp}, ARP:{_arp}, ICMP:{_icmp}, NUM:{_num}");
-            if (this._device == null) {
+            if (this._device == null)
+            {
                 NetworkTools.ListDevices();
+                NetworkTools.WriteDevices();
             }
             else {
                 NetworkTools.SniffPacket(_device);

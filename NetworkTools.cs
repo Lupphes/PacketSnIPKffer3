@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using PacketDotNet;
 using SharpPcap;
 using SharpPcap.LibPcap;
@@ -7,27 +8,34 @@ namespace ipk_sniffer
 {
     public class NetworkTools
     {
-        public static void ListDevices()
+        public static ICaptureDevice ListDevices()
         {
+            
             var devices = CaptureDeviceList.Instance;
-            if(devices.Count < 1) {
-                Console.WriteLine("No interfaces found on this device");
-            }
-            else {
-                foreach (var dev in devices) {
-                    if (dev.Name != null) {
-                        Console.WriteLine(dev.Name);
-                    }
+            if(devices.Count < 1) { return null; }
+
+            foreach (var dev in devices.OfType<LibPcapLiveDevice>()) {
+                foreach (var add in dev.Interface.Addresses)
+                {
+                    Console.WriteLine("");
+                    Console.WriteLine(add.Addr.hardwareAddress);
+                }
+                
+                
+                if (dev.Addresses.Count == 0)
+                {
+                        
                 }
             }
+            return null;
         }
 
         public static void SniffPacket(string inter)
         {
             // Extract a device from the list
-            var devices = CaptureDeviceList.Instance;
-            /*ICaptureDevice device = GetDeviceInfo(inter);
-            if (device == null)
+            var devices = CaptureDeviceList.Instance;/*
+            ICaptureDevice device = GetDeviceInfo(inter);*/
+            /*if (device == null)
             {
                 Console.WriteLine("Smula");
                 Environment.Exit((int) ReturnCode.ErrArguments);
@@ -68,6 +76,15 @@ namespace ipk_sniffer
         private void Device_OnPacketArrival(object s, CaptureEventArgs e)
         {
             Console.WriteLine(e.Packet);
+        }
+
+        private static ICaptureDevice GetDeviceInfo(string device)
+        {
+            return null;
+        }
+
+        public static void WriteDevices()
+        {
         }
     }
 }
