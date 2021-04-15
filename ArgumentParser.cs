@@ -1,8 +1,7 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using System.IO;
 
 namespace ipk_sniffer
 {
@@ -26,12 +25,12 @@ namespace ipk_sniffer
             if (this.Device == null)
             {
                 _devicesDict = NetworkTools.ListDevices();
-                WriteDevices();
+                this.WriteDevices();
                 Environment.Exit((int) ReturnCode.Success);
             }
         }
 
-        private int ParseArgument(string[] args)
+        private void ParseArgument(string[] args)
         {
             var deviceOption = new Option<string>(
                 new string[] {"--interface", "-i"},
@@ -72,23 +71,30 @@ namespace ipk_sniffer
             };
             rootCommand.Description = "IPK Project 2: Zeta -- xsloup02";
             rootCommand.Name = "ipk-sniffer";
+
             rootCommand.Handler =
                 CommandHandler.Create<string, int?, bool, bool, bool, bool, int, IConsole>(this.SaveValues);
-            return rootCommand.InvokeAsync(args).Result;
+            if (rootCommand.InvokeAsync(args).Result != 0) {
+                Environment.Exit((int)ReturnCode.ErrArguments);
+            }
         }
 
         private void SaveValues(string @interface, int? port, bool tcp, bool udp, bool arp, bool icmp, int n,
             IConsole console)
         {
 
-            if ((port >= 1 && port <= 65535) || port == null)
-            {
+            if ((port >= 1 && port <= 65535) || port == null) {
                 this.Port = port;
             }
             else
             {
                 Console.WriteLine("Specified port is not valid. It needs to be greater than 0 and lower than 65535");
                 Environment.Exit((int) ReturnCode.ErrInvalidPort);
+            }
+            if ((arp || icmp) && port != null)
+            {
+                Console.WriteLine("Port cannot be combined with ARP or ICMP argument");
+                Environment.Exit((int)ReturnCode.ErrInvalidFilter);
             }
 
             this.Device = @interface;
