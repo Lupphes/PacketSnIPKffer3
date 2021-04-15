@@ -14,7 +14,7 @@ namespace ipk_sniffer
         internal bool Arp;
         internal bool Icmp;
         internal int Num;
-        private Dictionary<string, Dictionary<string, string>> _devicesDict;
+        private readonly Dictionary<string, Dictionary<string, string>> _devicesDict;
 
 
         public ArgumentParser(string[] args)
@@ -33,7 +33,7 @@ namespace ipk_sniffer
         private void ParseArgument(string[] args)
         {
             var deviceOption = new Option<string>(
-                new string[] {"--interface", "-i"},
+                new[] {"--interface", "-i"},
                 description:
                 "Interface on which packet sniffer will listen. Without optional argument prints list of interfaces")
             {
@@ -46,13 +46,13 @@ namespace ipk_sniffer
             {
                 deviceOption,
                 new Option<int?>(
-                    new string[] {"--port", "-p"},
+                    new[] {"--port", "-p"},
                     description: "Specified listening port. If not specified, listen on all"),
                 new Option(
-                    new string[] {"--tcp", "-t"},
+                    new[] {"--tcp", "-t"},
                     description: "Display TCP packets"),
                 new Option(
-                    new string[] {"--udp", "-u"},
+                    new[] {"--udp", "-u"},
                     description:
                     "Display UDP packets"),
                 new Option(
@@ -91,8 +91,7 @@ namespace ipk_sniffer
                 Console.WriteLine("Specified port is not valid. It needs to be greater than 0 and lower than 65535");
                 Environment.Exit((int) ReturnCode.ErrInvalidPort);
             }
-            if ((arp || icmp) && port != null)
-            {
+            if ((arp || icmp) && port != null) {
                 Console.WriteLine("Port cannot be combined with ARP or ICMP argument");
                 Environment.Exit((int)ReturnCode.ErrInvalidFilter);
             }

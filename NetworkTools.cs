@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using PacketDotNet;
-using PacketDotNet.Ieee80211;
 using SharpPcap;
 using SharpPcap.LibPcap;
 
@@ -45,7 +44,7 @@ namespace ipk_sniffer {
         }
 
         public static void SniffPacket(ArgumentParser arguments) {
-            ICaptureDevice device = GetDeviceInfo(arguments.Device);
+            LibPcapLiveDevice device = GetDeviceInfo(arguments.Device);
             _device = device;
             _neededToCapture = arguments.Num;
             if (device == null) {
@@ -80,7 +79,7 @@ namespace ipk_sniffer {
 
         }
 
-        private static ICaptureDevice GetDeviceInfo(string specifiedDevice) {
+        private static LibPcapLiveDevice GetDeviceInfo(string specifiedDevice) {
             var devices = CaptureDeviceList.Instance;
             if (devices.Count < 1) { return null; }
 
@@ -93,41 +92,54 @@ namespace ipk_sniffer {
         }
 
         private static void OnArrivalHandler(object sender, CaptureEventArgs e) {
-            var packet = Packet.ParsePacket(e.Packet.LinkLayerType, e.Packet.Data);
-            var time = e.Packet.Timeval.Date.ToString("yyyy-MM-ddTHH\\:mm\\:ss.fffzzz");
-            var len = e.Packet.Data.Length;
+            try {
+                var packet = Packet.ParsePacket(e.Packet.LinkLayerType, e.Packet.Data);
+                var time = e.Packet.Timeval.Date.ToString("yyyy-MM-ddTHH\\:mm\\:ss.fffzzz");
+                var len = e.Packet.Data.Length;
 
-            var tcpUdpPacket = packet.Extract<TransportPacket>();
-            var icmp = packet.Extract<InternetPacket>();
-            var arpPacket = packet.Extract<ArpPacket>();
+                var tcpPacket = packet.Extract<TcpPacket>();
+                var udpPacket = packet.Extract<UdpPacket>();
+                var icmpv4 = packet.Extract<IcmpV4Packet>();
+                var icmpv6 = packet.Extract<IcmpV6Packet>();
+                var arpPacket = packet.Extract<ArpPacket>();
 
-            if (tcpUdpPacket != null) {
-                WriteTcpOrUdp(tcpUdpPacket, time, len);
-            } else if (icmp != null) {
-                WriteIcmp(icmp, time, len);
-            } else if (arpPacket != null) {
-                Console.WriteLine($"ARP {time}: {arpPacket.SenderProtocolAddress} > {arpPacket.TargetProtocolAddress}, length {len} bytes");
-            } else {
-                return;
+                if (tcpPacket != null) {
+                    WriteTcpOrUdp(tcpPacket, time, len);
+                } else if (udpPacket != null) {
+                    WriteTcpOrUdp(udpPacket, time, len, false);
+                } else if (icmpv4 != null) {
+                    WriteIcmp(icmpv4, time, len);
+                } else if (icmpv6 != null) {
+                    WriteIcmp(icmpv6, time, len);
+                } else if (arpPacket != null) {
+                    Console.WriteLine($"ARP {time}: {arpPacket.SenderProtocolAddress} > {arpPacket.TargetProtocolAddress}, length {len} bytes");
+                } else {
+                    return;
+                }
+
+                WritePacketData(packet);
+
+                _captured++;
+                if (_captured == _neededToCapture) {
+                    _device.StopCapture();
+                }
+            } catch (PcapException ex) {
+                Console.WriteLine($"Error in PCapLibrary: {ex}");
+                Environment.Exit((int)ReturnCode.ErrPCap);
+            } catch (Exception ex) {
+                Console.WriteLine($"General error while trying to capture packets: {ex}");
+                Environment.Exit((int)ReturnCode.ErrGeneralCapture);
             }
 
-            WritePacketData(packet);
-
-            _captured++;
-            if (_captured == _neededToCapture) {
-                _device.StopCapture();
-            }
         }
 
-        private static void WriteTcpOrUdp(TransportPacket tcpUdpPacket, string time, int len) {
-            var tcpPacket = tcpUdpPacket.Extract<TcpPacket>();
+        private static void WriteTcpOrUdp(TransportPacket tcpUdpPacket, string time, int len, bool isTCP=true) {
             var ipPacket = (IPPacket)tcpUdpPacket.ParentPacket;
             System.Net.IPAddress srcIp = ipPacket.SourceAddress;
             System.Net.IPAddress dstIp = ipPacket.DestinationAddress;
             int srcPort = tcpUdpPacket.SourcePort;
             int dstPort = tcpUdpPacket.DestinationPort;
-
-            Console.WriteLine($"{((tcpPacket != null) ? "(TCP)" : "(UDP)")} {time}: {srcIp} {srcPort} > {dstIp} {dstPort}, length {len} bytes");
+            Console.WriteLine($"{((isTCP) ? "(TCP)" : "(UDP)")} {time}: {srcIp} {srcPort} > {dstIp} {dstPort}, length {len} bytes");
         }
 
         private static void WriteIcmp(InternetPacket icmp, string time, int len) {
@@ -144,12 +156,12 @@ namespace ipk_sniffer {
             for (int i = 1; i < packet.BytesSegment.Bytes.Length + 1; i++) {
                 dataHexLine += packet.BytesSegment.Bytes[i - 1].ToString("x").PadLeft(2, '0') + " ";
                 dataAscii += (packet.BytesSegment.Bytes[i - 1] >= 33 && packet.BytesSegment.Bytes[i - 1] <= 126)
-                    ? Encoding.ASCII.GetString(new byte[] { packet.BytesSegment.Bytes[i - 1] })
+                    ? Encoding.ASCII.GetString(new[] { packet.BytesSegment.Bytes[i - 1] })
                     : ".";
 
                 if (i % 16 == 0) {
-                    indexHex = $"0x{i:X4}: ";
-                    Console.Write($"0x{i - 1:X4}: ");
+                    indexHex = $"0x{i+16:X4}: ";
+                    Console.Write($"0x{i:X4}: ");
                     dataAscii += "\n";
                     Console.Write(dataHexLine + dataAscii);
                     dataHexLine = "";

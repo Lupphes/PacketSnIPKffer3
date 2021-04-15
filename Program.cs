@@ -1,7 +1,4 @@
-﻿using System;
-
-
-namespace ipk_sniffer
+﻿namespace ipk_sniffer
 {
     static class Program
     {
