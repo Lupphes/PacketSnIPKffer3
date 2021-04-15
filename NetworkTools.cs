@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net;
+using System.Net.NetworkInformation;
 using System.Text;
 using PacketDotNet;
 using SharpPcap;
@@ -11,9 +13,8 @@ namespace ipk_sniffer
 {
     public class NetworkTools
     {
-
-        private static int _captured = 0;
-        private static int neededToCapture = 0;
+        private static int _captured;
+        private static int _neededToCapture;
         private static ICaptureDevice _device;
 
         public static Dictionary<string, Dictionary<string, string>> ListDevices()
@@ -57,21 +58,23 @@ namespace ipk_sniffer
         {
             ICaptureDevice device = GetDeviceInfo(arguments.Device);
             _device = device;
-            neededToCapture = arguments.Num;
+            _neededToCapture = arguments.Num;
             if (device == null)
             {
                 Console.WriteLine("Specified device not found");
                 Environment.Exit((int) ReturnCode.ErrArguments);
             }
 
-            const int readTimeoutMilliseconds = 1000;
-            device.Open(DeviceMode.Promiscuous, readTimeoutMilliseconds);
+            const int readTimeout = 1000;
+            device.Open(DeviceMode.Promiscuous, readTimeout);
             
-            Console.WriteLine();
-            Console.WriteLine("-- Listening on {0}...", device.Name);
-            device.OnPacketArrival += device_OnPacketArrival;
+            Console.WriteLine($"Connected to {device.Name}");
+            device.OnPacketArrival += OnArrivalHandler;
 
-            string filter = "ip or ip6 and tcp or ip or ip6 and udp  or icmp or icmp6";
+            string filter = CreateFilter(arguments);
+
+            Console.WriteLine(filter);
+
             device.Filter = filter;
 
             device.StartCapture();
@@ -92,18 +95,18 @@ namespace ipk_sniffer
             return null;
         }
 
-        private static void device_OnPacketArrival(object sender, CaptureEventArgs e)
+        private static void OnArrivalHandler(object sender, CaptureEventArgs e)
         {
             var packet = Packet.ParsePacket(e.Packet.LinkLayerType, e.Packet.Data);
-            var time = e.Packet.Timeval.Date.ToString("yyyy-MM-ddTHH\\:mm\\:ss.fffffffzzz");
+            var time = e.Packet.Timeval.Date.ToString("yyyy-MM-ddTHH\\:mm\\:ss.fffzzz");
             var len = e.Packet.Data.Length;
 
             var tcpPacket = packet.Extract<TcpPacket>();
             var udpPacket = packet.Extract<UdpPacket>();
             var icmpV4 = packet.Extract<IcmpV4Packet>();
             var icmpV6 = packet.Extract<IcmpV6Packet>();
-            
-            //ARP aRP = packet.Extract<ARP>();
+            var arpPacket = packet.Extract<PacketDotNet.ArpPacket>();
+
             if (tcpPacket != null)
             {
                 var ipPacket = (IPPacket)tcpPacket.ParentPacket;
@@ -137,6 +140,13 @@ namespace ipk_sniffer
                     System.Net.IPAddress dstIp = ipPacket.DestinationAddress;
                     Console.WriteLine($"ICMP6 {time}: {srcIp} > {dstIp}, length {len} bytes");
                 }
+            }
+            else if (arpPacket != null)
+            {
+                var ipPacket = (IPPacket)arpPacket.ParentPacket;
+                System.Net.IPAddress srcIp = ipPacket.SourceAddress;
+                System.Net.IPAddress dstIp = ipPacket.DestinationAddress;
+                Console.WriteLine($"ARP {time}: {srcIp} > {dstIp}, length {len} bytes");
             }
 
             string dataHexLine = "";
@@ -175,13 +185,56 @@ namespace ipk_sniffer
                 
             }
 
-
-
             _captured++;
-            if (_captured == neededToCapture)
+            if (_captured == _neededToCapture)
             {
                 _device.StopCapture();
             }
+        }
+
+        private static string CreateFilter(ArgumentParser arguments)
+        {
+            var port = "";
+            var filter = "";
+            if (arguments.Tcp)
+            {
+                filter += "(ip or ip6 and tcp) or ";
+            }
+            if (arguments.Udp)
+            {
+                filter += "(ip or ip6 and udp) or ";
+            }
+            if (arguments.Icmp)
+            {
+                filter += "(icmp or icmp6) or ";
+            }
+            if (arguments.Arp)
+            {
+                filter += "(arp) or ";
+            }
+            if (arguments.Port != null)
+            {
+                port = $"(port {arguments.Port})";
+            }
+            if (port == "" && filter == "")
+            {
+                filter = "(ip or ip6 and tcp) or (ip or ip6 and udp) or (icmp or icmp6) or (arp)";
+            }
+            else if (filter != "" && port != "")
+            {
+                filter = filter.Remove(filter.Length - 4, 4);
+                filter = $"({filter}) and {port}";
+            }
+            else if (filter == "" && port != "")
+            {
+                filter = $"{port} and ((ip or ip6 and tcp) or (ip or ip6 and udp) or (icmp or icmp6) or (arp))";
+            }
+            else if (filter != "" && port == "")
+            {
+                filter = filter.Remove(filter.Length - 4, 4);
+            }
+
+            return filter;
         }
     }
 }
