@@ -6,6 +6,7 @@ namespace ipk_sniffer
     public enum ReturnCode : int
     {
         Success = 0,
-        ErrArguments = 1
+        ErrArguments = 1,
+        ErrInvalidPort = 2
     }
 }

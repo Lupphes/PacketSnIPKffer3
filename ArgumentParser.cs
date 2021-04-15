@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.IO;
@@ -7,33 +8,33 @@ namespace ipk_sniffer
 {
     public class ArgumentParser
     {
-        private string _device;
-        private int? _port;
-        private bool _tcp;
-        private bool _udp;
-        private bool _arp;
-        private bool _icmp;
-        private int _num;
+        internal string Device;
+        internal int? Port;
+        internal bool Tcp;
+        internal bool Udp;
+        internal bool Arp;
+        internal bool Icmp;
+        internal int Num;
+        private Dictionary<string, Dictionary<string, string>> _devicesDict;
 
 
         public ArgumentParser(string[] args)
         {
             ParseArgument(args);
-            Console.WriteLine($"Device:{_device}, Port:{_port}, TCP:{_tcp}, UDP:{_udp}, ARP:{_arp}, ICMP:{_icmp}, NUM:{_num}");
-            if (this._device == null)
+            Console.WriteLine(
+                $"Device:{Device}, Port:{Port}, TCP:{Tcp}, UDP:{Udp}, ARP:{Arp}, ICMP:{Icmp}, NUM:{Num}");
+            if (this.Device == null)
             {
-                NetworkTools.ListDevices();
-                NetworkTools.WriteDevices();
-            }
-            else {
-                NetworkTools.SniffPacket(_device);
+                _devicesDict = NetworkTools.ListDevices();
+                WriteDevices();
+                Environment.Exit((int) ReturnCode.Success);
             }
         }
 
         private int ParseArgument(string[] args)
         {
             var deviceOption = new Option<string>(
-                new string[] {"-i", "--interface"},
+                new string[] {"--interface", "-i"},
                 description:
                 "Interface on which packet sniffer will listen. Without optional argument prints list of interfaces")
             {
@@ -42,7 +43,8 @@ namespace ipk_sniffer
                     Arity = ArgumentArity.ZeroOrOne
                 }
             };
-            var rootCommand = new RootCommand {
+            var rootCommand = new RootCommand
+            {
                 deviceOption,
                 new Option<int?>(
                     new string[] {"--port", "-p"},
@@ -70,26 +72,66 @@ namespace ipk_sniffer
             };
             rootCommand.Description = "IPK Project 2: Zeta -- xsloup02";
             rootCommand.Name = "ipk-sniffer";
-            rootCommand.Handler = CommandHandler.Create<string, int?, bool, bool, bool, bool, int, IConsole>(this.SaveValues);
+            rootCommand.Handler =
+                CommandHandler.Create<string, int?, bool, bool, bool, bool, int, IConsole>(this.SaveValues);
             return rootCommand.InvokeAsync(args).Result;
         }
-        
-        private void SaveValues(string @interface, int? port, bool tcp, bool udp, bool arp, bool icmp, int n, IConsole console) {
-            
-            if ((port >= 1 && port <= 65535) || port == null) {
-                this._port = port;
+
+        private void SaveValues(string @interface, int? port, bool tcp, bool udp, bool arp, bool icmp, int n,
+            IConsole console)
+        {
+
+            if ((port >= 1 && port <= 65535) || port == null)
+            {
+                this.Port = port;
             }
-            else {
-                Console.WriteLine("Uh on");
-                Environment.Exit((int) ReturnCode.ErrArguments);
+            else
+            {
+                Console.WriteLine("Specified port is not valid. It needs to be greater than 0 and lower than 65535");
+                Environment.Exit((int) ReturnCode.ErrInvalidPort);
             }
-            this._device = @interface;
-            this._tcp = tcp;
-            this._udp = udp;
-            this._arp = arp;
-            this._icmp = icmp;
-            this._num = n;
+
+            this.Device = @interface;
+            this.Tcp = tcp;
+            this.Udp = udp;
+            this.Arp = arp;
+            this.Icmp = icmp;
+            this.Num = n;
         }
-        
+
+        public void WriteDevices()
+        {
+            Console.WriteLine("List of all interfaces:");
+            
+            foreach (KeyValuePair<string, Dictionary<string, string>> device in this._devicesDict)
+            {
+                string deviceString = "";
+                if (device.Value["happyName"] != null)
+                {
+                    deviceString += $"{device.Value["happyName"]} ({device.Key}):\n";
+                }
+                else
+                {
+                    deviceString += $"{device.Key}:\n";
+                }
+                if (device.Value["mac"] != null)
+                {
+                    deviceString += "\tMAC: ";
+                    deviceString += $"{device.Value["mac"]}\n\t";
+                }
+                if (device.Value["address"] != null)
+                {
+                    deviceString += "IP:";
+                    deviceString += $"{device.Value["address"]}";
+                    deviceString += "\n";
+                }
+                if (device.Value["description"] != "")
+                {
+                    deviceString += $"\tDescription: {device.Value["description"]}";
+                }
+
+                Console.WriteLine(deviceString);
+            }
+        }
     }
 }

@@ -7,10 +7,8 @@ namespace ipk_sniffer
     {
         private static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!!!");
-            var argument = new ArgumentParser(args);
-            
-
+            var arguments = new ArgumentParser(args);
+            NetworkTools.SniffPacket(arguments);
         }
     }
 }   
