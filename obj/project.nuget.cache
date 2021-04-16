@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "dgSpecHash": "Avyfc/KsKDOe2FhDHw5VbncJVYteQWmergKEL5EK6KIITqVzNhtq3Veo3HOUDbK/svcg6I4LGJN7sgNTtjCiOw==",
+  "success": true,
+  "projectFilePath": "C:\\Users\\ondre\\Desktop\\xsloup02\\ipk-sniffer\\ipk-sniffer\\ipk-sniffer.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\ondre\\.nuget\\packages\\microsoft.csharp\\4.4.1\\microsoft.csharp.4.4.1.nupkg.sha512",
+    "C:\\Users\\ondre\\.nuget\\packages\\packetdotnet\\1.1.2\\packetdotnet.1.1.2.nupkg.sha512",
+    "C:\\Users\\ondre\\.nuget\\packages\\sharppcap\\5.4.0\\sharppcap.5.4.0.nupkg.sha512",
+    "C:\\Users\\ondre\\.nuget\\packages\\system.commandline\\2.0.0-beta1.20574.7\\system.commandline.2.0.0-beta1.20574.7.nupkg.sha512",
+    "C:\\Users\\ondre\\.nuget\\packages\\system.memory\\4.5.4\\system.memory.4.5.4.nupkg.sha512",
+    "C:\\Users\\ondre\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\4.7.0\\system.runtime.compilerservices.unsafe.4.7.0.nupkg.sha512"
+  ],
+  "logs": []
+}
