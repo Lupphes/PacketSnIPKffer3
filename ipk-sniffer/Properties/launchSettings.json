@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ipk-sniffer": {
+      "commandName": "Project",
+      "commandLineArgs": "-h"
+    }
+  }
+}
