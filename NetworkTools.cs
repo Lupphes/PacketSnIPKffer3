@@ -7,11 +7,18 @@ using SharpPcap;
 using SharpPcap.LibPcap;
 
 namespace ipk_sniffer {
+    /// <summary>
+    ///  Network tools library
+    ///  Create filter, capture packets, list devices, prints data
+    /// </summary>
     public class NetworkTools {
         private static int _captured;
         private static int _neededToCapture;
         private static ICaptureDevice _device;
 
+        /// <summary>
+        /// Create a string of devices and their information
+        /// </summary>
         public static Dictionary<string, Dictionary<string, string>> ListDevices() {
             Dictionary<string, Dictionary<string, string>> devicesDict = new Dictionary<string, Dictionary<string, string>>();
 
@@ -43,6 +50,9 @@ namespace ipk_sniffer {
             return devicesDict;
         }
 
+        /// <summary>
+        /// Create a filter, adds handler and starts the capture of the device
+        /// </summary>
         public static void SniffPacket(ArgumentParser arguments) {
             LibPcapLiveDevice device = GetDeviceInfo(arguments.Device);
             _device = device;
@@ -79,6 +89,10 @@ namespace ipk_sniffer {
 
         }
 
+        /// <summary>
+        /// Get LibPcapLiveDevice from the device's name
+        /// Support for friendly name and formal name
+        /// </summary>
         private static LibPcapLiveDevice GetDeviceInfo(string specifiedDevice) {
             var devices = CaptureDeviceList.Instance;
             if (devices.Count < 1) { return null; }
@@ -91,6 +105,10 @@ namespace ipk_sniffer {
             return null;
         }
 
+        /// <summary>
+        /// Handler for incoming packet
+        /// Parse the packet and prints its information
+        /// </summary>
         private static void OnArrivalHandler(object sender, CaptureEventArgs e) {
             try {
                 var packet = Packet.ParsePacket(e.Packet.LinkLayerType, e.Packet.Data);
@@ -130,18 +148,23 @@ namespace ipk_sniffer {
                 Console.WriteLine($"General error while trying to capture packets: {ex}");
                 Environment.Exit((int)ReturnCode.ErrGeneralCapture);
             }
-
         }
 
-        private static void WriteTcpOrUdp(TransportPacket tcpUdpPacket, string time, int len, bool isTCP=true) {
+        /// <summary>
+        /// Write the TCP or UDP IP and ports
+        /// </summary>
+        private static void WriteTcpOrUdp(TransportPacket tcpUdpPacket, string time, int len, bool isTcp=true) {
             var ipPacket = (IPPacket)tcpUdpPacket.ParentPacket;
             System.Net.IPAddress srcIp = ipPacket.SourceAddress;
             System.Net.IPAddress dstIp = ipPacket.DestinationAddress;
             int srcPort = tcpUdpPacket.SourcePort;
             int dstPort = tcpUdpPacket.DestinationPort;
-            Console.WriteLine($"{((isTCP) ? "(TCP)" : "(UDP)")} {time}: {srcIp} {srcPort} > {dstIp} {dstPort}, length {len} bytes");
+            Console.WriteLine($"{((isTcp) ? "(TCP)" : "(UDP)")} {time}: {srcIp} {srcPort} > {dstIp} {dstPort}, length {len} bytes");
         }
 
+        /// <summary>
+        /// Write the ICMP4 or ICMP6 IP without ports
+        /// </summary>
         private static void WriteIcmp(InternetPacket icmp, string time, int len) {
             var ipPacket = (IPPacket)icmp.ParentPacket;
             System.Net.IPAddress srcIp = ipPacket.SourceAddress;
@@ -149,6 +172,9 @@ namespace ipk_sniffer {
             Console.WriteLine($"(ICMP) {time}: {srcIp} > {dstIp}, length {len} bytes");
         }
 
+        /// <summary>
+        /// Write the data of the packet in ASCII and HEX
+        /// </summary>
         private static void WritePacketData(Packet packet) {
             string dataHexLine = "";
             string dataAscii = "";
@@ -160,8 +186,8 @@ namespace ipk_sniffer {
                     : ".";
 
                 if (i % 16 == 0) {
-                    indexHex = $"0x{i+16:X4}: ";
-                    Console.Write($"0x{i:X4}: ");
+                    indexHex = $"0x{i:X4}: ";
+                    Console.Write($"0x{i-16:X4}: ");
                     dataAscii += "\n";
                     Console.Write(dataHexLine + dataAscii);
                     dataHexLine = "";
@@ -179,6 +205,10 @@ namespace ipk_sniffer {
             }
         }
 
+        /// <summary>
+        /// Create the filter from the user input which is used
+        /// to filter the types of packets and ports
+        /// </summary>
         private static string CreateFilter(ArgumentParser arguments) {
             var port = "";
             var filter = "";

@@ -5,9 +5,13 @@ using System.CommandLine.Invocation;
 
 namespace ipk_sniffer
 {
+    /// <summary>
+    ///  Parse given arguments, validate them and save them
+    ///  Also print the list of devices if only interface is given
+    /// </summary>
     public class ArgumentParser
     {
-        internal string Device;
+        internal string Device; // Interface
         internal int? Port;
         internal bool Tcp;
         internal bool Udp;
@@ -16,20 +20,32 @@ namespace ipk_sniffer
         internal int Num;
         private readonly Dictionary<string, Dictionary<string, string>> _devicesDict;
 
-
+        /// <summary>
+        ///  Launch parser
+        ///  Print the list of devices if only interface is given
+        /// </summary>
         public ArgumentParser(string[] args)
         {
             ParseArgument(args);
-            Console.WriteLine(
-                $"Device:{Device}, Port:{Port}, TCP:{Tcp}, UDP:{Udp}, ARP:{Arp}, ICMP:{Icmp}, NUM:{Num}");
-            if (this.Device == null)
-            {
+            // This line is here for debugging purposes. Lets you see what arguments were given
+            //Console.WriteLine(
+            //    $"Device: {Device}, Port: {Port}, TCP: {Tcp}, UDP: {Udp}, ARP: {Arp}, ICMP: {Icmp}, NUM: {Num}"
+            foreach (var item in args) {
+                if (item.Equals("-?") | item.Equals("-h") || item.Equals("--help") || item.Equals("--version")) {
+                    Environment.Exit((int)ReturnCode.Success);
+                }
+            }
+            if (this.Device == null) {
                 _devicesDict = NetworkTools.ListDevices();
                 this.WriteDevices();
                 Environment.Exit((int) ReturnCode.Success);
             }
         }
 
+        /// <summary>
+        ///  Parse the arguments and calls the handler to save them.
+        ///  Exits the application If there was an error
+        /// </summary>
         private void ParseArgument(string[] args)
         {
             var deviceOption = new Option<string>(
@@ -79,10 +95,12 @@ namespace ipk_sniffer
             }
         }
 
+        /// <summary>
+        ///  Validate the data and save them into the instance
+        /// </summary>
         private void SaveValues(string @interface, int? port, bool tcp, bool udp, bool arp, bool icmp, int n,
             IConsole console)
         {
-
             if ((port >= 1 && port <= 65535) || port == null) {
                 this.Port = port;
             }
@@ -104,6 +122,9 @@ namespace ipk_sniffer
             this.Num = n;
         }
 
+        /// <summary>
+        ///  Print the devices with their information into the console
+        /// </summary>
         public void WriteDevices()
         {
             Console.WriteLine("List of all interfaces:");

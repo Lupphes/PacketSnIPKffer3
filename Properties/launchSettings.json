@@ -2,7 +2,7 @@
   "profiles": {
     "ipk-sniffer": {
       "commandName": "Project",
-      "commandLineArgs": "-i \"Ethernet\" -t -u --arp --icmp -n 100"
+      "commandLineArgs": "-h"
     }
   }
 }

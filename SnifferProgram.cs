@@ -1,6 +1,10 @@
 ﻿namespace ipk_sniffer
 {
-    static class Program
+    /// <summary>
+    ///  The main file of a packet sniffer. 
+    ///  Start parser and network tools
+    /// </summary>
+    static class SnifferProgram
     {
         private static void Main(string[] args)
         {
