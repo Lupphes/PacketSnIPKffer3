@@ -1,5 +1,6 @@
 clean:
 	dotnet clean ipk-sniffer/
+	rm -rf ./out
  
 restore:
 	dotnet restore ipk-sniffer/

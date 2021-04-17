@@ -1,8 +1,0 @@
-{
-  "runtimeOptions": {
-    "additionalProbingPaths": [
-      "/home/luppo/.dotnet/store/|arch|/|tfm|",
-      "/home/luppo/.nuget/packages"
-    ]
-  }
-}
