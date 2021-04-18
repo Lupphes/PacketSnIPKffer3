@@ -1,7 +1,7 @@
 ﻿---
 title: "IPK Projekt 2: Zeta"
 author: "Ondřej Sloup (xsloup02)"
-date: today
+date: 18.04.2021
 ...
 
 # IPK Projekt 2: Zeta
