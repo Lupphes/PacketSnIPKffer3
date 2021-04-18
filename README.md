@@ -65,6 +65,21 @@ Options:
 ## Příklady spuštění
 
 
+## Seznam souborů
+```
+├── Makefile
+├── README.md
+├── ipk-sniffer
+│   ├── ArgumentParser.cs
+│   ├── NetworkTools.cs
+│   ├── ReturnCode.cs
+│   ├── SnifferProgram.cs
+│   ├── ipk-sniffer.csproj
+│   └── ipk-sniffer.sln
+└── manual.pdf
+
+1 directory, 9 files
+```
 
 ## Rozšíření zadání
 1. Uživatel dostane seznam dostupných zařízení při spuštění programu bez parametrů
