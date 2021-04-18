@@ -18,6 +18,8 @@ namespace ipk_sniffer {
 
         /// <summary>
         /// Create a string of devices and their information
+        /// When creating this code I used this example from offical package repository
+        /// https://github.com/chmorgan/sharppcap/blob/master/Examples/Example1.IfList/Example1.IfList.cs
         /// </summary>
         public static Dictionary<string, Dictionary<string, string>> ListDevices() {
             Dictionary<string, Dictionary<string, string>> devicesDict = new Dictionary<string, Dictionary<string, string>>();
@@ -28,7 +30,7 @@ namespace ipk_sniffer {
             foreach (var device in devices.OfType<LibPcapLiveDevice>()) {
                 devicesDict[device.Name] = new Dictionary<string, string>()
                 {
-                    {"happyName", device.Interface.FriendlyName},
+                    {"happyName", device.Interface.FriendlyName}, // User friendly name
                     {"mac", device.Interface.MacAddress?.ToString()},
                     {"description", device.Interface.Description}
 
@@ -52,6 +54,8 @@ namespace ipk_sniffer {
 
         /// <summary>
         /// Create a filter, adds handler and starts the capture of the device
+        /// When creating this code I used this example from offical package repository
+        /// https://github.com/chmorgan/sharppcap/blob/master/Examples/Example5.PcapFilter/Program.cs
         /// </summary>
         public static void SniffPacket(ArgumentParser arguments) {
             LibPcapLiveDevice device = GetDeviceInfo(arguments.Device);
@@ -63,7 +67,7 @@ namespace ipk_sniffer {
             }
 
             try {
-                const int readTimeout = 1000;
+                const int readTimeout = 1000; // Timeout for packet
                 device.Open(DeviceMode.Promiscuous, readTimeout);
 
                 Console.WriteLine($"Connected to {device.Name}");
@@ -73,7 +77,7 @@ namespace ipk_sniffer {
                 try {
                     string filter = CreateFilter(arguments);
                     device.Filter = filter;
-                    Console.WriteLine(filter);
+                    //Console.WriteLine(filter); //Debugging output for filter
                 } catch (Exception e) {
                     Console.WriteLine($"Error while constructing a filter: {e}");
                     Environment.Exit((int)ReturnCode.ErrInvalidFilter);
@@ -98,7 +102,8 @@ namespace ipk_sniffer {
             if (devices.Count < 1) { return null; }
 
             foreach (var device in devices.OfType<LibPcapLiveDevice>()) {
-                if ((device.Name.Equals(specifiedDevice) || device.Interface.FriendlyName != null && device.Interface.FriendlyName.Equals(specifiedDevice))) {
+                // Friendly name can be specified as well
+                if ((device.Name.Equals(specifiedDevice) || device.Interface.FriendlyName != null && device.Interface.FriendlyName.Equals(specifiedDevice))) { 
                     return device;
                 }
             }
@@ -108,6 +113,8 @@ namespace ipk_sniffer {
         /// <summary>
         /// Handler for incoming packet
         /// Parse the packet and prints its information
+        /// When creating this code I used this example from offical package repository
+        /// https://github.com/chmorgan/sharppcap/blob/master/Examples/Example3.BasicCap/Program.cs
         /// </summary>
         private static void OnArrivalHandler(object sender, CaptureEventArgs e) {
             try {
@@ -115,6 +122,7 @@ namespace ipk_sniffer {
                 var time = e.Packet.Timeval.Date.ToString("yyyy-MM-ddTHH\\:mm\\:ss.fffzzz");
                 var len = e.Packet.Data.Length;
 
+                // Only supported packets are extracted
                 var tcpPacket = packet.Extract<TcpPacket>();
                 var udpPacket = packet.Extract<UdpPacket>();
                 var icmpv4 = packet.Extract<IcmpV4Packet>();
@@ -233,7 +241,8 @@ namespace ipk_sniffer {
                 filter = filter.Remove(filter.Length - 4, 4);
                 filter = $"({filter}) and {port}";
             } else if (filter == "" && port != "") {
-                filter = $"{port} and ((ip or ip6 and tcp) or (ip or ip6 and udp) or (icmp or icmp6) or (arp))";
+                // Only supported packets are specified If nothing given
+                filter = $"{port} and ((ip or ip6 and tcp) or (ip or ip6 and udp) or (icmp or icmp6) or (arp))"; 
             } else if (filter != "" && port == "") {
                 filter = filter.Remove(filter.Length - 4, 4);
             }

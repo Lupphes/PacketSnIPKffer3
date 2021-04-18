@@ -110,8 +110,14 @@ namespace ipk_sniffer
                 Environment.Exit((int) ReturnCode.ErrInvalidPort);
             }
             if ((arp || icmp) && port != null) {
-                Console.WriteLine("Port cannot be combined with ARP or ICMP argument");
-                Environment.Exit((int)ReturnCode.ErrInvalidFilter);
+                if (Udp || tcp) {
+                    Console.WriteLine("Warning: Filtering using ARP or ICMP with port is not possible.");
+                    arp = false;
+                    icmp = false;
+                } else {
+                    Console.WriteLine("Port specification cannot be combined with ARP or ICMP argument");
+                    Environment.Exit((int)ReturnCode.ErrInvalidFilter);
+                }
             }
 
             this.Device = @interface;
