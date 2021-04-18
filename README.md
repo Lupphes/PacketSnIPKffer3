@@ -63,6 +63,41 @@ Options:
   ```
 
 ## Příklady spuštění
+```
+student@student-vm:~/PacketSnIPKffer3$ ./out/ipk-sniffer
+List of all interfaces:
+enp0s3 (enp0s3):
+    MAC: 0800277E8B8E
+    IP:
+       HW addr: 0800277E8B8E
+       10.0.2.15
+       fe80::6968:6bba:b4d5:f54b%2
+    Description: 
+lo (lo):
+    MAC: 000000000000
+    IP:
+       HW addr: 000000000000
+       127.0.0.1
+       ::1
+    Description: 
+any:
+    Description: Pseudo-device that captures on all interfaces
+bluetooth-monitor:
+    Description: Bluetooth Linux Monitor
+nflog:
+    Description: Linux netfilter log (NFLOG) interface
+nfqueue:
+    Description: Linux netfilter queue (NFQUEUE) interface
+```
+```
+student@student-vm:~/PacketSnIPKffer3$ sudo ./out/ipk-sniffer -i enp0s3
+Connected to enp0s3
+(TCP) 2021-04-18T22:49:36.788+00:00: 10.0.2.15 33222 > 34.107.221.82 80, length 54 bytes
+0x0000: 52 54 00 12 35 02 08 00  27 7e 8b 8e 08 00 45 00 RT..5... '~....E.
+0x0010: 00 28 51 01 40 00 40 06  de 02 0a 00 02 0f 22 6b .(Q.@.@. ......"k
+0x0020: dd 52 81 c6 00 50 36 2a  07 af 00 19 64 de 50 10 .R...P6* ....d.P.
+0x0030: fa 14 0b e7 00 00                                ......
+```
 
 
 ## Seznam souborů
